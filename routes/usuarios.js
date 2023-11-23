@@ -1,4 +1,7 @@
 const router = require('express').Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const Usuario = require('../models/usuarios.model');
 const Raza = require('../models/raza.model');
@@ -54,5 +57,54 @@ router.get('/:id', async (req, res)=> {
 
     }
 });
+
+//Register
+router.post('/register', async (req, res)=> {
+  try{
+
+    req.body.password = bcrypt.hashSync(req.body.password, 10);
+      const usuario = await Usuario.create(req.body);
+      res.json(usuario);
+  }catch(error){
+      res.json({error: error.message });
+
+  }
+});
+
+//Login
+router.post('/login', async (req, res)=> {
+ 
+  const usuario = await Usuario.findOne({email: req.body.email});
+
+  if(!usuario){
+    return res.json({error: 'Credenciales incorrectas' });
+  }
+
+  const comprobarPassword = bcrypt.compareSync(req.body.password, usuario.password);
+
+  if(!comprobarPassword){
+    return res.json({error: 'Credenciales incorrectas' });
+  }
+
+
+      res.json({ 
+        success: "Login exitoso",   
+        token: generateTokenAuth(usuario)
+              });
+
+
+});
+
+function generateTokenAuth(usuario){
+  const payload = {
+    usuario_id: usuario._id
+  };
+
+  const secretKey = crypto.randomBytes(32).toString('hex');
+
+
+  return jwt.sign(payload,secretKey);
+
+}
 
 module.exports = router;
