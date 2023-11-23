@@ -17,9 +17,5 @@ router.get('/', async (req, res)=> {
    
 });
 
-//obtener por id
-router.get('/:id', (req, res)=> {
-    
-});
 
 module.exports = router;
