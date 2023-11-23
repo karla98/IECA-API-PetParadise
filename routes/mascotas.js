@@ -1,74 +1,111 @@
-const router = require('express').Router();
+const router = require("express").Router();
 
-const Mascota = require('../models/mascotas.model');
-const Raza = require('../models/raza.model');
+const Mascota = require("../models/mascotas.model");
+const Raza = require("../models/raza.model");
+
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+const cloudinary = require('cloudinary').v2;
+cloudinary.config(process.env.CLOUDINARY_URL);
 
 
+const streamifier = require('streamifier'); 
+
+
+// router.use(express.json());
 //obtener listado
-router.get('/', async (req, res)=> {    
-    try{
-        const mascotas = await Mascota.find().populate('especie').populate('raza').exec();
+router.get("/", async (req, res) => {
+  try {
+    const mascotas = await Mascota.find()
+      .populate("especie")
+      .populate("raza")
+      .exec();
 
-        res.json(mascotas);
-    }catch(error){
-        res.json({error: error.message });
-
-    }
-   
+    res.json(mascotas);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
 
 //obtener por id
-router.get('/:id', async (req, res)=> {
-    const { id } = req.params;
-    try{
-        const mascota = await Mascota.findById(id).populate('especie').populate('raza').exec();
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const mascota = await Mascota.findById(id)
+      .populate("especie")
+      .populate("raza")
+      .exec();
 
-        res.json(mascota);
-    }catch(error){
-        res.json({error: error.message });
-
-    }
+    res.json(mascota);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
 
-//creación 
-router.post('/', async (req, res)=> {    
-    try{
-        const mascota = await Mascota.create(req.body);
+//creación
+router.post("/",upload.array('imagenes', 3), async (req, res) => {
 
-        res.json(mascota);
-    }catch(error){
-        res.json({error: error.message });
+  try {
 
-    } 
+    console.log('req.files: ', req.files);
+
+    const imagenes = req.files;
+
+    const imagenesUrls = await Promise.all(
+        imagenes.map(async (imagen) => {
+          return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result.secure_url);
+              }
+            );
+  
+            streamifier.createReadStream(imagen.buffer).pipe(stream);
+          });
+        })
+      );
+
+    const mascota = await Mascota.create({
+        ...req.body,
+        imagenes: imagenesUrls,
+      });
+
+    res.json(mascota);
+    
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
-
 
 //Editar
-router.patch('/:id', async (req, res)=> {  
-    const { id } = req.params;
-  
-    try{
-        const mascota = await Mascota.findByIdAndUpdate(id, req.body, {new: true});
+router.patch("/:id", async (req, res) => {
+  const { id } = req.params;
 
-        res.json(mascota);
-    }catch(error){
-        res.json({error: error.message });
+  try {
+    const mascota = await Mascota.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
 
-    } 
+    res.json(mascota);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
 
 //Eliminar
-router.delete('/:id', async (req, res)=> {  
-    const { id } = req.params;
-  
-    try{
-        const mascota = await Mascota.findByIdAndDelete(id);
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
 
-        res.json(mascota);
-    }catch(error){
-        res.json({error: error.message });
+  try {
+    const mascota = await Mascota.findByIdAndDelete(id);
 
-    } 
+    res.json(mascota);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
 });
 
 module.exports = router;
