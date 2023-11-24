@@ -72,28 +72,28 @@ router.post('/register', async (req, res)=> {
 });
 
 //Login
-router.post('/login', async (req, res)=> {
- 
-  const usuario = await Usuario.findOne({email: req.body.email});
+router.post('/login', async (req, res) => {
+  try {
+    const usuario = await Usuario.findOne({ email: req.body.email });
 
-  if(!usuario){
-    return res.json({error: 'Credenciales incorrectas' });
+    if (!usuario) {
+      return res.status(404).json({ error: 'Cuenta inexistente' });
+    }
+
+    if (usuario.password && bcrypt.compareSync(req.body.password, usuario.password)) {
+      res.json({
+        success: 'Login exitoso',
+        token: generateTokenAuth(usuario),
+      });
+    } else {
+      return res.status(401).json({ error: 'Credenciales incorrectas' });
+    }
+  } catch (error) {
+    console.error('Error en la autenticación:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
-
-  const comprobarPassword = bcrypt.compareSync(req.body.password, usuario.password);
-
-  if(!comprobarPassword){
-    return res.json({error: 'Credenciales incorrectas' });
-  }
-
-
-      res.json({ 
-        success: "Login exitoso",   
-        token: generateTokenAuth(usuario)
-              });
-
-
 });
+
 
 function generateTokenAuth(usuario){
   const payload = {
