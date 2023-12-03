@@ -52,4 +52,21 @@ router.post("/", authMiddleware, upload.single("imagen"),  async (req, res) => {
   }
 );
 
+
+//obtener imagen de perfil
+router.get("/", authMiddleware, async (req, res) => {
+  try {
+
+    const usuarioId = req.usuario.usuario_id;
+    
+    const usuario = await Usuario.findById(
+      usuarioId,
+    );
+
+    res.json(usuario);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
 module.exports = router;
