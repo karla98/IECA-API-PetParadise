@@ -14,6 +14,9 @@ const usuarioSchema = new Schema({
     type: String,
     required: true
   },
+  imagen: {
+    type: String
+  },
   mascotas: [{
     type: Schema.Types.ObjectId,
     ref: 'Mascota'

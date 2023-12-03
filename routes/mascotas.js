@@ -13,6 +13,7 @@ cloudinary.config(process.env.CLOUDINARY_URL);
 
 const streamifier = require('streamifier'); 
 
+const authMiddleware = require('../middlewares/auth');
 
 // router.use(express.json());
 //obtener listado
@@ -45,11 +46,13 @@ router.get("/:id", async (req, res) => {
 });
 
 //creación
-router.post("/",upload.array('imagenes', 3), async (req, res) => {
+router.post("/", authMiddleware,upload.array('imagenes', 3), async (req, res) => {
 
   try {
 
     console.log('req.files: ', req.files);
+
+    const usuarioId = req.usuario.usuario_id;
 
     const imagenes = req.files;
 
@@ -70,6 +73,7 @@ router.post("/",upload.array('imagenes', 3), async (req, res) => {
 
     const mascota = await Mascota.create({
         ...req.body,
+        propietario: usuarioId,
         imagenes: imagenesUrls,
       });
 

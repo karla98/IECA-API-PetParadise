@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 
 const Usuario = require('../models/usuarios.model');
 const Raza = require('../models/raza.model');
@@ -100,7 +99,7 @@ function generateTokenAuth(usuario){
     usuario_id: usuario._id
   };
 
-  const secretKey = crypto.randomBytes(32).toString('hex');
+  const secretKey = "IECA_Cur$0Angu14ar202E";
 
 
   return jwt.sign(payload,secretKey);
