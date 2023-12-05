@@ -1,11 +1,12 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const verificarToken = require('../middlewares/auth');
 
 const Usuario = require('../models/usuarios.model');
 const Raza = require('../models/raza.model');
 
-
+const tokensInvalidados = [];
 //obtener listado
 router.get('/', async (req, res)=> {    
     try{
@@ -58,15 +59,13 @@ router.get('/:id', async (req, res)=> {
 });
 
 //Register
-router.post('/register', async (req, res)=> {
+router.post('/save', async (req, res)=> {
   try{
-
     req.body.password = bcrypt.hashSync(req.body.password, 10);
       const usuario = await Usuario.create(req.body);
       res.json(usuario);
   }catch(error){
       res.json({error: error.message });
-
   }
 });
 
@@ -92,6 +91,20 @@ router.post('/login', async (req, res) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
+router.post('/logout', verificarToken, (req, res) => {
+  const token = req.header('Authorization')?.split(' ')[1];
+
+  try {
+    // Añadir el token a la lista de tokens inválidos
+    tokensInvalidados.push(token);
+
+    return res.json({ success: 'Logout exitoso' });
+  } catch (error) {
+    console.error('Error en el logout:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+})
 
 
 function generateTokenAuth(usuario){
