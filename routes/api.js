@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+router.use('/home', require('./home'));
 router.use('/mascotas', require('./mascotas'));
 router.use('/especies', require('./especies'));
 router.use('/razas', require('./razas'));
