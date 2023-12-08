@@ -2,6 +2,7 @@ const router = require("express").Router();
 
 const Mascota = require("../models/mascotas.model");
 const Raza = require("../models/raza.model");
+const Usuario = require("../models/usuarios.model");
 
 const multer = require("multer");
 const storage = multer.memoryStorage();
@@ -52,7 +53,7 @@ router.get("/", async (req, res) => {
       .populate({
         path: "propietario",
         model: "Usuario",
-        select: "nombre  imagen"
+        select: "nombre  imagen",
       })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -121,6 +122,14 @@ router.post(
         propietario: usuarioId,
         imagenes: imagenesUrls,
       });
+
+      if(mascota && mascota._id){
+        const usuario = await Usuario.findByIdAndUpdate(
+          usuarioId,
+          { $push: { mascotas: mascota._id } },
+          { new: true }
+        );
+      }
 
       res.json(mascota);
     } catch (error) {
