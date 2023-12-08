@@ -1,6 +1,9 @@
 const router = require("express").Router();
 
 const Usuario = require("../models/usuarios.model");
+require("../models/raza.model");
+require("../models/especie.model");
+
 
 const multer = require("multer");
 const storage = multer.memoryStorage();
@@ -52,6 +55,31 @@ router.post("/", authMiddleware, upload.single("imagen"),  async (req, res) => {
   }
 );
 
+router.get("/mis-mascotas", authMiddleware, async (req, res) => {
+  try {
+
+    const usuarioId = req.usuario.usuario_id;
+    
+    const usuario = await Usuario.findById(usuarioId).populate({
+      path: 'mascotas',
+      populate: {
+        path: 'especie',
+        model: 'Especie'
+      }
+    }).populate({
+      path: 'mascotas',
+      populate: {
+        path: 'raza',
+        model: 'Raza'
+      }
+    });
+
+    res.json(usuario.mascotas);
+
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
 
 //obtener imagen de perfil
 router.get("/", authMiddleware, async (req, res) => {
