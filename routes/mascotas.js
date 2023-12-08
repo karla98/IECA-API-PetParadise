@@ -35,7 +35,7 @@ router.get("/", async (req, res) => {
 router.get("/", async (req, res) => {
   let totalItems;
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 2;
+  const limit = parseInt(req.query.limit) || 10;
 
   try {
     totalItems = await Mascota.countDocuments();
@@ -49,6 +49,11 @@ router.get("/", async (req, res) => {
     const mascotas = await Mascota.find()
       .populate("especie")
       .populate("raza")
+      .populate({
+        path: "propietario",
+        model: "Usuario",
+        select: "nombre  imagen"
+      })
       .skip((page - 1) * limit)
       .limit(limit);
 
