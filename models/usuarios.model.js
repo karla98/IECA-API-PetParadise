@@ -20,6 +20,10 @@ const usuarioSchema = new Schema({
   mascotas: [{
     type: Schema.Types.ObjectId,
     ref: 'Mascota'
+  }],
+  posts:  [{
+    type: Schema.Types.ObjectId,
+    ref: 'Post'
   }]
 },{ collection: 'Usuarios' });
 
