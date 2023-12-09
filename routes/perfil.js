@@ -1,6 +1,9 @@
 const router = require("express").Router();
 
 const Usuario = require("../models/usuarios.model");
+require("../models/raza.model");
+require("../models/especie.model");
+
 
 const multer = require("multer");
 const storage = multer.memoryStorage();
@@ -52,6 +55,31 @@ router.post("/", authMiddleware, upload.single("imagen"),  async (req, res) => {
   }
 );
 
+router.get("/mis-mascotas", authMiddleware, async (req, res) => {
+  try {
+
+    const usuarioId = req.usuario.usuario_id;
+    
+    const usuario = await Usuario.findById(usuarioId).populate({
+      path: 'mascotas',
+      populate: {
+        path: 'especie',
+        model: 'Especie'
+      }
+    }).populate({
+      path: 'mascotas',
+      populate: {
+        path: 'raza',
+        model: 'Raza'
+      }
+    });
+
+    res.json(usuario.mascotas);
+
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
 
 //obtener imagen de perfil
 router.get("/", authMiddleware, async (req, res) => {
@@ -68,5 +96,66 @@ router.get("/", authMiddleware, async (req, res) => {
     res.json({ error: error.message });
   }
 });
+
+
+
+//eliminar imagen desde el back
+router.patch("/deleteImagenUsuario/:id", upload.none(), async (req, res) => {
+
+  
+  const { id } = req.params;
+
+  try {
+
+    let usuario = await Usuario.findById(id)
+      .exec();
+
+      // res.json(usuario);
+
+    usuario.imagen = '';
+
+    
+
+
+    await usuario.save(); // Save the updated usuario
+
+    // res.json(usuario);
+
+    usuario = await Usuario.findById(id)
+      .exec();
+
+    res.json(usuario);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+
+
+//Editar
+router.patch("/:id", upload.none(), async (req, res) => {
+  // res.json('holaaa');
+  const { id } = req.params;
+  // res.json(id);
+
+  const userData = { ...req.body };
+
+  try {
+    // res.json(mascota);
+
+    let usuario = await Usuario.findByIdAndUpdate(id, userData, {
+      new: true,
+    });
+
+    usuario = await Usuario.findById(id)
+      .exec();
+
+    res.json(usuario);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+
 
 module.exports = router;
