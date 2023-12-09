@@ -97,4 +97,65 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
+
+
+//eliminar imagen desde el back
+router.patch("/deleteImagenUsuario/:id", upload.none(), async (req, res) => {
+
+  
+  const { id } = req.params;
+
+  try {
+
+    let usuario = await Usuario.findById(id)
+      .exec();
+
+      // res.json(usuario);
+
+    usuario.imagen = '';
+
+    
+
+
+    await usuario.save(); // Save the updated usuario
+
+    // res.json(usuario);
+
+    usuario = await Usuario.findById(id)
+      .exec();
+
+    res.json(usuario);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+
+
+//Editar
+router.patch("/:id", upload.none(), async (req, res) => {
+  // res.json('holaaa');
+  const { id } = req.params;
+  // res.json(id);
+
+  const userData = { ...req.body };
+
+  try {
+    // res.json(mascota);
+
+    let usuario = await Usuario.findByIdAndUpdate(id, userData, {
+      new: true,
+    });
+
+    usuario = await Usuario.findById(id)
+      .exec();
+
+    res.json(usuario);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+
+
 module.exports = router;
