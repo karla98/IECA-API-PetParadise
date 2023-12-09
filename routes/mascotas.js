@@ -123,7 +123,7 @@ router.post(
         imagenes: imagenesUrls,
       });
 
-      if(mascota && mascota._id){
+      if (mascota && mascota._id) {
         const usuario = await Usuario.findByIdAndUpdate(
           usuarioId,
           { $push: { mascotas: mascota._id } },
@@ -138,14 +138,98 @@ router.post(
   }
 );
 
-//Editar
-router.patch("/:id", async (req, res) => {
+//eliminar imagen desde el back
+router.patch("/deleteImagenMascota/:id", upload.none(), async (req, res) => {
+  // res.json('holaaa');
   const { id } = req.params;
+  // res.json(id);
+
+  const url_imagen = req.body.url;
+  // res.json(url_imagen);
 
   try {
-    const mascota = await Mascota.findByIdAndUpdate(id, req.body, {
+    // res.json(mascota);
+
+    mascota = await Mascota.findById(id)
+      .populate("especie")
+      .populate("raza")
+      .exec();
+
+    const index = mascota.imagenes.indexOf(url_imagen);
+
+    if (index !== -1) {
+      // El string fue encontrado en el array
+      mascota.imagenes.splice(index, 1);
+    }
+
+
+    await mascota.save(); // Save the updated mascota
+
+
+    mascota = await Mascota.findById(id)
+      .populate("especie")
+      .populate("raza")
+      .exec();
+
+    res.json(mascota);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+//Editar
+router.patch("/:id", upload.array("imagenes", 3), async (req, res) => {
+  // res.json('holaaa');
+  const { id } = req.params;
+  // res.json(id);
+
+  const mascotaData = { ...req.body };
+
+  try {
+    // res.json(mascota);
+
+    let mascota = await Mascota.findByIdAndUpdate(id, mascotaData, {
       new: true,
     });
+
+    mascota = await Mascota.findById(id)
+      .populate("especie")
+      .populate("raza")
+      .exec();
+
+    const imagenes = req.files;
+    if (imagenes) {
+      const imagenesUrls = await Promise.all(
+        imagenes.map(async (imagen) => {
+          return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result.secure_url);
+              }
+            );
+
+            streamifier.createReadStream(imagen.buffer).pipe(stream);
+          });
+        })
+      );
+
+      // mascota.imagenes.push(imagenesUrls);
+      mascota.imagenes.push(...imagenesUrls);
+    } else {
+      mascota.imagenes = mascotaData.imagenes;
+    }
+
+    await mascota.save(); // Save the updated mascota
+
+    // En laravel seria algo asi
+    // mascota->imagenes  = '';
+    // mascota->save();
+
+    mascota = await Mascota.findById(id)
+      .populate("especie")
+      .populate("raza")
+      .exec();
 
     res.json(mascota);
   } catch (error) {
